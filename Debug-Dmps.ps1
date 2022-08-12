@@ -49,10 +49,11 @@ Function jsonConversion {
         $postStack = $($splits[2] -split 'SYMBOL_NAME:')[1]
         
         
-        $preSymbols = $preStack.split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+_[A-Z]+:  *'
+        $preSymbols = $preStack.split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+_[A-Z]+:  *' 
         $postSymbols = $postStack.split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+_[A-Z]+:  *'
         $symbols = $preSymbols + $postSymbols
-        $symbols = $symbols -replace ': ',' '
+        $symbols = $symbols -replace ':[ \t]+','='
+        $jsonSymbols = $symbols | ConvertFrom-StringData | ConvertTo-Json
     }
 }
 
