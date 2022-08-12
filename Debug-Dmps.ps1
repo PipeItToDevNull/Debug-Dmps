@@ -42,10 +42,16 @@ Function jsonConversion {
         
         # $splits[0] is trash
         # $splits[1] is before stack_text
-        # $split[2] is after stack_text
+        # $splits[2] is after stack_text
         
-        $stackText = $($splits[2] -split 'SYMBOL_NAME:')[0]
-        $symbols = $stackText[1] -replace ('^  ','SYMBOL_NAME: ')
+        $preStack = $splits[1] -replace ('^  ','SYMBOL_NAME: ')
+        $stack = $($splits[2] -split 'SYMBOL_NAME:')[0]
+        $postStack = $($splits[2] -split 'SYMBOL_NAME:')[1]
+        
+        
+        $preSymbols = $preStack.split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+_[A-Z]+:  *'
+        $postSymbols = $postStack.split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+_[A-Z]+:  *'
+        $symbols = $preSymbols + $postSymbols
     }
 }
 
