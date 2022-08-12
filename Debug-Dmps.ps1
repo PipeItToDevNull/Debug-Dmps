@@ -52,6 +52,7 @@ Function jsonConversion {
         $preSymbols = $preStack.split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+_[A-Z]+:  *'
         $postSymbols = $postStack.split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+_[A-Z]+:  *'
         $symbols = $preSymbols + $postSymbols
+        $symbols = $symbols -replace ': ',' '
     }
 }
 
