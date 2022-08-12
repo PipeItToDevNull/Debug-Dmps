@@ -26,13 +26,21 @@ $jsonFile = './dmps.json'
 
 #----------[Functions]----------#
 
-Function Run {
-    $dmps = Get-ChildItem $Directory
+Function logCreation {
+    $dmps = Get-ChildItem $Directory | ? { $_.Name -Like '*.dmp' }
     ForEach ($dmp in $dmps) {
         $logFile = $dmp.Name + ".log"
         WinDbgX.exe -z "$Directory\$dmp" -c "!analyze -v ; .detach" -loga "$Directory\$logFile"
     }
 }
+Function jsonConversion {
+    $logs = Get-ChildItem $Directory | ? { $_.Name -Like '*.log' }
+    ForEach ($log in $logs) {
+        $logContent = Get-Content $log
+        
+    }
+}
 
 #----------[Execution]----------#
-Run
+logCreation
+jsonConversion
