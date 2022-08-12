@@ -37,7 +37,15 @@ Function jsonConversion {
     $logs = Get-ChildItem $Directory | ? { $_.Name -Like '*.log' }
     ForEach ($log in $logs) {
         $logContent = Get-Content $log
+        $splits = $logContent -split '------------------'
+        $splits = $splits -split 'STACK_TEXT:'
         
+        # $splits[0] is trash
+        # $splits[1] is before stack_text
+        # $split[2] is after stack_text
+        
+        $stackText = $($splits[2] -split 'SYMBOL_NAME:')[0]
+        $symbols = $stackText[1] -replace ('^  ','SYMBOL_NAME: ')
     }
 }
 
