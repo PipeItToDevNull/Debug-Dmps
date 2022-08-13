@@ -22,7 +22,6 @@ param (
 
 #----------[Declarations]----------#
 
-$jsonFile = './dmps.json'
 
 #----------[Functions]----------#
 
@@ -36,24 +35,39 @@ Function logCreation {
 Function jsonConversion {
     $logs = Get-ChildItem $Directory | ? { $_.Name -Like '*.log' }
     ForEach ($log in $logs) {
-        $logContent = Get-Content $log
+        $jsonFile = $log.Fullname -replace '.log','.json'
+        $logContent = Get-Content -Raw $log.FullName
         $splits = $logContent -split '------------------'
         $splits = $splits -split 'STACK_TEXT:'
-        
+
         # $splits[0] is trash
         # $splits[1] is before stack_text
         # $splits[2] is after stack_text
-        
+
         $preStack = $splits[1] -replace ('^  ','SYMBOL_NAME: ')
         $stack = $($splits[2] -split 'SYMBOL_NAME:')[0]
         $postStack = $($splits[2] -split 'SYMBOL_NAME:')[1]
-        
-        
+
+
         $preSymbols = $preStack.split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+_[A-Z]+:  *' 
         $postSymbols = $postStack.split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+_[A-Z]+:  *'
         $symbols = $preSymbols + $postSymbols
         $symbols = $symbols -replace ':[ \t]+','='
-        $jsonSymbols = $symbols | ConvertFrom-StringData | ConvertTo-Json
+        $jsonSymbols = $symbols
+
+        $splitStack = $stack.split([Environment]::NewLine)
+        $i = 0
+        $stackObject = @()
+        ForEach ($line in $splitStack) {
+            $validLine = $line | ? { $_ -Match '[a-z][A-Z][0-9]' } 
+            If ($validLine -NotLike $null) {
+                $stackObject += $validLine -replace '^',"$i= "
+                $i++
+            }
+        }
+
+        $jsonSymbols = $jsonSymbols + $stackObject
+        $jsonSymbols | ConvertFrom-StringData | ConvertTo-Json > $jsonFile
     }
 }
 
