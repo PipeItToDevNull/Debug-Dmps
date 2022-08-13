@@ -3,14 +3,14 @@
   Use WinDbgX to analyze .dmp files in bulk.
 .DESCRIPTION
   using WinDbgX parse .dmp files in a specified directory and put their output into JSON arrays that can be used in other processes.
-.PARAMETER <Parameter_Name>
-  <Brief description of parameter input required. Repeat this attribute if required>
+.PARAMETER Directory
+  Specify the directory containing your dump files. Preferably next to the PS1 to keep things simple...
 .INPUTS
   .dmp files
 .OUTPUTS
-  ./dmps.json
+  .log and .json files next to their respective .dmp files.
 .EXAMPLE
-  <Example goes here. Repeat this attribute for more than one example>
+  .\Debug-Dmps.ps1 -Directory .\Dumps 
 #>
 
 #----------[Initialisations]----------#
