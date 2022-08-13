@@ -66,8 +66,9 @@ Function jsonConversion {
             }
         }
 
-        $jsonSymbols = $jsonSymbols + $stackObject
-        $jsonSymbols | ConvertFrom-StringData | ConvertTo-Json > $jsonFile
+        $outputObject = $jsonSymbols + $stackObject
+        $output = $outputObject | ConvertFrom-StringData | ConvertTo-Json
+        Set-Content -Value $output -Path $jsonFile
     }
 }
 
