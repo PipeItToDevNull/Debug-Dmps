@@ -6,11 +6,11 @@ Outputs: .log and .json files next to their respective .dmp files, as well as th
 Example:
 
 ```Powershell
-$json = .\Debug-Dmps.ps1 -Directory .\Dumps 
+$dmps = .\Debug-Dmps.ps1 -Directory .\Dumps 
 ```
 
 To load existing JSON back into a variable use:
 
 ```powershell
-$json = Get-Content -Raw .\Dumps\*.json | ConvertFrom-Json
+$dmps = Get-Content -Raw .\Dumps\*.json | ConvertFrom-Json
 ```
