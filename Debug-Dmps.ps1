@@ -8,7 +8,7 @@
 .INPUTS
   .dmp files
 .OUTPUTS
-  .log and .json files next to their respective .dmp files.
+  .log and .json files next to their respective .dmp files. The contents of the JSON files is also output to the terminal, for caputure in a single variable.
 .EXAMPLE
   .\Debug-Dmps.ps1 -Directory .\Dumps 
 #>
@@ -66,9 +66,19 @@ Function jsonConversion {
             }
         }
 
-        $outputObject = $jsonSymbols + $stackObject
-        $output = $outputObject | ConvertFrom-StringData | ConvertTo-Json
-        Set-Content -Value $output -Path $jsonFile
+        # this makes a dirty array
+        $arrayObject = $jsonSymbols + $stackObject
+        $array = $arrayObject | ConvertFrom-StringData 
+
+        # convert our array to an object
+        $output = New-Object PSObject
+        ForEach ($a in $array) {
+            Add-Member -InputObject $output -MemberType NoteProperty -Name $a.Keys -Value $a.$($a.Keys)
+        }
+
+        $json = $output | ConvertTo-Json
+        Set-Content -Value $json -Path $jsonFile
+        $output
     }
 }
 
