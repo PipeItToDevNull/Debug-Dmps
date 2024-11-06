@@ -2,27 +2,22 @@
 .SYNOPSIS
   Analyze .dmp files in bulk.
 .DESCRIPTION
-  Using WinDbgX or Windows SDK Debugging tools parse .dmp files in a singles or batch and put their output into JSON arrays that can be used in other processes.
+  Using Windows SDK Debugging tools parse .dmp files in a singles or batch and put their output into JSON arrays that can be used in other processes.
 .PARAMETER Target
   Specify the specific dmp file or a directory containing multiple dmp files
-.PARAMETER Parser
-  Either windbg.exe or cdb.exe
 .INPUTS
   .dmp files
 .OUTPUTS
   JSON array is sent to STDOUT
 .EXAMPLE
-  .\Debug-Dmps.ps1 -Target .\Dumps -Parser windbg.exe
+  .\Debug-Dmps.ps1 -Target .\Dumps
 #>
 
 #----------[Initialisations]----------#
 
 param (
     [Parameter(Mandatory=$True)]
-    [Object]$Target,
-    [Parameter(Mandatory=$True)]
-    [ValidateSet("windbg.exe", "cdb.exe")]
-    [string]$Parser
+    [Object]$Target
 )
 
 #----------[Declarations]----------#
@@ -55,6 +50,7 @@ Function logCreation {
     ###################
     # Debug Execution #
     ###################
+    $parser = "cdb.exe"
     $command = "-z $dmp -c `"k; !analyze -v ; q`""
 
     Write-Host "Processing: $dmp"
