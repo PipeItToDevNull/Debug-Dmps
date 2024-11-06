@@ -71,7 +71,7 @@ Function logCreation {
     $process.StartInfo = $startInfo
     $process.Start() | Out-Null
     
-    $parsedContent = $process.StandardOutput.ReadToEnd()
+    $rawContent = $process.StandardOutput.ReadToEnd()
     $errorOutput = $process.StandardError.ReadToEnd()
 
     $process.WaitForExit()
@@ -80,7 +80,7 @@ Function logCreation {
     # Splitsville #
     ###############
 
-    $splits = $parsedContent -split '------------------'
+    $splits = $rawContent -split '------------------'
     $splits = $splits -split 'STACK_TEXT:'
 
     # $splits[0] is info
@@ -153,6 +153,8 @@ Function logCreation {
     # Add bulk data
     Add-Member -InputObject $output -MemberType NoteProperty -Name DumpInfo -Value $dmpInfo
     Add-Member -InputObject $output -MemberType NoteProperty -Name Analysis -Value $analysis
+    Add-Member -InputObject $output -MemberType NoteProperty -Name RawContent -Value $rawContent
+    
 
     ###########
     # Outputs #
