@@ -107,6 +107,14 @@ Function logCreation {
     $analysis = $analysis.Trim()
     $analysis = $analysis -join "`n"
 
+    #########################
+    # Output oject creation #
+    #########################
+    $output = New-Object PSObject
+    Add-Member -InputObject $output -MemberType NoteProperty -Name DumpInfo -Value $dmpInfo
+    Add-Member -InputObject $output -MemberType NoteProperty -Name Analysis -Value $analysis
+    
+
     If ($splits.length -eq 2) {
             
         $symbols = $splits[1].split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+(_[A-Z0-9]+)?:  *' -CaseSensitive
@@ -138,23 +146,17 @@ Function logCreation {
 
     }
     
-    ###################
-    # Array creations #
-    ###################
+    ###########################
+    # Finish object creations #
+    ###########################
 
     $array = $arrayObject | ConvertFrom-StringData 
-
-    # convert our array to an object
-    $output = New-Object PSObject
     ForEach ($a in $array) {
         Add-Member -InputObject $output -MemberType NoteProperty -Name $a.Keys -Value $a.$($a.Keys)
     }
-
-    # Add bulk data
-    Add-Member -InputObject $output -MemberType NoteProperty -Name DumpInfo -Value $dmpInfo
-    Add-Member -InputObject $output -MemberType NoteProperty -Name Analysis -Value $analysis
-    Add-Member -InputObject $output -MemberType NoteProperty -Name RawContent -Value $rawContent
     
+    # Add raw data last so it is at the bottom of the object
+    Add-Member -InputObject $output -MemberType NoteProperty -Name RawContent -Value $rawContent
 
     ###########
     # Outputs #
