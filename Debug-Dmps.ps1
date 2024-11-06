@@ -5,6 +5,8 @@
   Using WinDbgX or Windows SDK Debugging tools parse .dmp files in a singles or batch and put their output into JSON arrays that can be used in other processes.
 .PARAMETER Target
   Specify the specific dmp file or a directory containing multiple dmp files
+.PARAMETER Parser
+  Either windbg.exe or cdb.exe
 .INPUTS
   .dmp files
 .OUTPUTS
