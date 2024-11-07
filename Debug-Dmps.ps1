@@ -54,7 +54,6 @@ Function logCreation {
     $command = "-z $dmp -c `"k; !analyze -v ; q`""
 
     Write-Host "Processing: $dmp"
-    Write-Host "Using: $parser"
 
     $startInfo = New-Object System.Diagnostics.ProcessStartInfo
     $startInfo.FileName = $parser
