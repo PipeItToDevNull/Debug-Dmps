@@ -27,21 +27,13 @@ param (
 
 Function filePrep {
     If (!($(Get-Item -Path $Target).PSIsContainer)) {
-        
-        Write-Host "File"
-        
-        $dmp = $(Get-Item -Path $Target).FullName
-        logCreation
-
-        } Else {
-        
-        Write-Host "Directory"
-
-        $dmps = Get-ChildItem $Target | ? { $_.Name -Like '*.dmp' }
-        Write-Host "Found Dumps: $dmps"
-        ForEach ($dmp in $dmps) {
-            $dmp = $dmp.FullName
+            $dmp = $(Get-Item -Path $Target).FullName
             logCreation
+        } Else {
+            $dmps = Get-ChildItem $Target | ? { $_.Name -Like '*.dmp' }
+            ForEach ($dmp in $dmps) {
+                $dmp = $dmp.FullName
+                logCreation
         }
     } 
 }
@@ -52,8 +44,6 @@ Function logCreation {
     ###################
     $parser = "cdb.exe"
     $command = "-z $dmp -c `"k; !analyze -v ; q`""
-
-    Write-Host "Processing: $dmp"
 
     $startInfo = New-Object System.Diagnostics.ProcessStartInfo
     $startInfo.FileName = $parser
@@ -119,16 +109,16 @@ Function logCreation {
         $symbols = $splits[1].split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+(_[A-Z0-9]+)?:  *' -CaseSensitive
         $cleanSymbols = $symbols -replace ':[ \t]+','='
 
-		$fields = @(
-			"BUGCHECK_CODE",
-			"BUGCHECK_P1",
-			"BUGCHECK_P2",
-			"BUGCHECK_P3",
-			"BUGCHECK_P4",
-			"FILE_IN_CAB"
-		)
-		
-		$cleanSymbols -split "`n" | ForEach-Object {
+        $fields = @(
+            "BUGCHECK_CODE",
+            "BUGCHECK_P1",
+            "BUGCHECK_P2",
+            "BUGCHECK_P3",
+            "BUGCHECK_P4",
+            "FILE_IN_CAB"
+        )
+        
+        $cleanSymbols -split "`n" | ForEach-Object {
             ForEach ($field in $fields) {
                 If ($_ -match "^$field=(.*)$") {
                     $output[$field] = $matches[1].Trim()
@@ -206,7 +196,7 @@ Function logCreation {
     # Outputs #
     ########### 
     # Plaintext output
-    $output
+    #$output
     
     # JSON output
     $json = $output | ConvertTo-Json -AsArray
