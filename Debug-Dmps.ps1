@@ -106,18 +106,36 @@ Function logCreation {
     $analysis = $analysis.Trim()
     $analysis = $analysis -join "`n"
 
-    #########################
-    # Output oject creation #
-    #########################
-    $output = New-Object PSObject
-    Add-Member -InputObject $output -MemberType NoteProperty -Name DumpInfo -Value $dmpInfo
-    Add-Member -InputObject $output -MemberType NoteProperty -Name Analysis -Value $analysis
-    
+    ##########################
+    # Output object creation #
+    ##########################
+    $output = @{}
+    $output["dmpInfo"] = $dmpInfo
+    $output["analysis"] = $analysis
+    $output["rawContent"] = $rawContent
 
     If ($splits.length -eq 2) {
             
         $symbols = $splits[1].split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+(_[A-Z0-9]+)?:  *' -CaseSensitive
-        $arrayObject = $symbols -replace ':[ \t]+','='
+        $cleanSymbols = $symbols -replace ':[ \t]+','='
+
+		$fields = @(
+			"BUGCHECK_CODE",
+			"BUGCHECK_P1",
+			"BUGCHECK_P2",
+			"BUGCHECK_P3",
+			"BUGCHECK_P4",
+			"FILE_IN_CAB"
+		)
+		
+		$cleanSymbols -split "`n" | ForEach-Object {
+            ForEach ($field in $fields) {
+                If ($_ -match "^$field=(.*)$") {
+                    $output[$field] = $matches[1].Trim()
+                }
+            }
+        }
+
 
         } Else {
 
@@ -126,45 +144,72 @@ Function logCreation {
         $postStack = $($splits[2] -split 'SYMBOL_NAME:')[1]
 
         $preSymbols = $preStack.split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+(_[A-Z0-9]+)?:  *' -CaseSensitive 
-        $postSymbols = $postStack.split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+(_[A-Z0-9]+)?:  *'
-        $dirtySymbols = $preSymbols + $postSymbols
-        $symbols = $dirtySymbols -replace ':[ \t]+','=' 
+        $cleanPreSymbols = $preSymbols -replace ':[ \t]+','=' 
 
-        $splitStack = $stack.split([Environment]::NewLine)
-        $i = 0
-        $stackObject = @()
-        ForEach ($line in $splitStack) {
-            $validLine = $line | ? { $_ -Match '[a-z][A-Z][0-9]' } 
-            If ($validLine -NotLike $null) {
-                $stackObject += $validLine -replace '^',"$i= "
-                $i++
+        $postSymbols = $postStack.split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+(_[A-Z0-9]+)?:  *'
+        $cleanPostSymbols = $postSymbols -replace ':[ \t]+','=' 
+
+        # Pick out the preSymbol values we care about
+        $preFields = @(
+            "BUGCHECK_CODE",
+            "BUGCHECK_P1",
+            "BUGCHECK_P2",
+            "BUGCHECK_P3",
+            "BUGCHECK_P4",
+            "FILE_IN_CAB",
+            "SECURITY_COOKIE",
+            "BLACKBOXBSD",
+            "BLACKBOXNTFS",
+            "BLACKBOXPNP",
+            "BLACKBOXWINLOGON",
+            "PROCESS_NAME"
+        )
+        
+        $cleanPreSymbols -split "`n" | ForEach-Object {
+            ForEach ($field in $preFields) {
+                If ($_ -match "^$field=(.*)$") {
+                    $output[$field] = $matches[1].Trim()
+                }
             }
         }
-        # this makes a dirty array
-        $arrayObject = $symbols + $stackObject
-
+        
+        # Pick out the postSymbol values we care about
+        $postFields = @(
+            "MODULE_NAME",
+            "IMAGE_NAME",
+            "IMAGE_VERSION",
+            "STACK_COMMAND",
+            "BUCKET_ID_FUNC_OFFSET",
+            "FAILURE_BUCKET_ID",
+            "OS_VERSION",
+            "BUILDLAB_STR",
+            "OSPLATFORM_TYPE",
+            "OSNAME",
+            "FAILURE_ID_HASH"
+        )
+        
+        $cleanPostSymbols -split "`n" | ForEach-Object {
+            ForEach ($field in $postFields) {
+                If ($_ -match "^$field=(.*)$") {
+                    $output[$field] = $matches[1].Trim()
+                }
+            }
+        }
     }
     
     ###########################
     # Finish object creations #
     ###########################
 
-    $array = $arrayObject | ConvertFrom-StringData 
-    ForEach ($a in $array) {
-        Add-Member -InputObject $output -MemberType NoteProperty -Name $a.Keys -Value $a.$($a.Keys)
-    }
-    
-    # Add raw data last so it is at the bottom of the object
-    Add-Member -InputObject $output -MemberType NoteProperty -Name RawContent -Value $rawContent
 
     ###########
     # Outputs #
     ########### 
     # Plaintext output
-    #$output
+    $output
     
     # JSON output
-    $json = $output | ConvertTo-Json
+    $json = $output | ConvertTo-Json -AsArray
     $json
 }
 
