@@ -25,17 +25,18 @@ param (
 #----------[Functions]----------#
 
 Function Process-Dmps {
-    dmpArray = @{}
+    $dmpArray = @()
     If (!($(Get-Item -Path $Target).PSIsContainer)) {
             $dmp = $(Get-Item -Path $Target).FullName
-            dmpArray += Process-DmpObject
+            $dmpArray += Process-DmpObject
         } Else {
             $dmps = Get-ChildItem $Target | ? { $_.Name -Like '*.dmp' }
             ForEach ($dmp in $dmps) {
                 $dmp = $dmp.FullName
-                dmpArray += Process-DmpObject
+                $dmpArray += Process-DmpObject
         }
-    } 
+    }
+	Return $dmpArray | ConvertTo-Json -AsArray
 }
 
 Function Process-DmpObject {
@@ -188,8 +189,7 @@ Function Process-DmpObject {
     ###########
     # Outputs #
     ########### 
-    $json = $output | ConvertTo-Json
-    $json
+    $output 
 }
 
 #----------[Execution]----------#
