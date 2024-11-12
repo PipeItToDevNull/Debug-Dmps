@@ -22,23 +22,24 @@ param (
 
 #----------[Declarations]----------#
 
-
 #----------[Functions]----------#
 
-Function filePrep {
+Function Process-Dmps {
+    $dmpArray = @()
     If (!($(Get-Item -Path $Target).PSIsContainer)) {
             $dmp = $(Get-Item -Path $Target).FullName
-            logCreation
+            $dmpArray += Process-DmpObject
         } Else {
             $dmps = Get-ChildItem $Target | ? { $_.Name -Like '*.dmp' }
             ForEach ($dmp in $dmps) {
                 $dmp = $dmp.FullName
-                logCreation
+                $dmpArray += Process-DmpObject
         }
-    } 
+    }
+	Return $dmpArray | ConvertTo-Json -AsArray
 }
 
-Function logCreation {
+Function Process-DmpObject {
     ###################
     # Debug Execution #
     ###################
@@ -126,7 +127,6 @@ Function logCreation {
             }
         }
 
-
         } Else {
 
         $preStack = $splits[1] -replace ('^  ','SYMBOL_NAME: ')
@@ -186,22 +186,11 @@ Function logCreation {
             }
         }
     }
-    
-    ###########################
-    # Finish object creations #
-    ###########################
-
-
     ###########
     # Outputs #
     ########### 
-    # Plaintext output
-    #$output
-    
-    # JSON output
-    $json = $output | ConvertTo-Json -AsArray
-    $json
+    $output 
 }
 
 #----------[Execution]----------#
-filePrep
+Process-Dmps
