@@ -105,86 +105,90 @@ Function Process-DmpObject {
     $output["analysis"] = $analysis
     $output["rawContent"] = $rawContent
 
-    If ($splits.length -eq 2) {
+    Try {
+        If ($splits.length -eq 2) {
+                
+            $symbols = $splits[1].split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+(_[A-Z0-9]+)?:  *' -CaseSensitive
+            $cleanSymbols = $symbols -replace ':[ \t]+','='
+
+            $fields = @(
+                "BUGCHECK_CODE",
+                "BUGCHECK_P1",
+                "BUGCHECK_P2",
+                "BUGCHECK_P3",
+                "BUGCHECK_P4",
+                "FILE_IN_CAB"
+            )
             
-        $symbols = $splits[1].split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+(_[A-Z0-9]+)?:  *' -CaseSensitive
-        $cleanSymbols = $symbols -replace ':[ \t]+','='
+            $cleanSymbols -split "`n" | ForEach-Object {
+                ForEach ($field in $fields) {
+                    If ($_ -match "^$field=(.*)$") {
+                        $output[$field] = $matches[1].Trim()
+                    }
+                }
+            }
 
-        $fields = @(
-            "BUGCHECK_CODE",
-            "BUGCHECK_P1",
-            "BUGCHECK_P2",
-            "BUGCHECK_P3",
-            "BUGCHECK_P4",
-            "FILE_IN_CAB"
-        )
-        
-        $cleanSymbols -split "`n" | ForEach-Object {
-            ForEach ($field in $fields) {
-                If ($_ -match "^$field=(.*)$") {
-                    $output[$field] = $matches[1].Trim()
+            } Else {
+
+            $preStack = $splits[1] -replace ('^  ','SYMBOL_NAME: ')
+            $stack = $($splits[2] -split 'SYMBOL_NAME:')[0]
+            $postStack = $($splits[2] -split 'SYMBOL_NAME:')[1]
+
+            $preSymbols = $preStack.split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+(_[A-Z0-9]+)?:  *' -CaseSensitive 
+            $cleanPreSymbols = $preSymbols -replace ':[ \t]+','=' 
+
+            $postSymbols = $postStack.split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+(_[A-Z0-9]+)?:  *'
+            $cleanPostSymbols = $postSymbols -replace ':[ \t]+','=' 
+
+            # Pick out the preSymbol values we care about
+            $preFields = @(
+                "BUGCHECK_CODE",
+                "BUGCHECK_P1",
+                "BUGCHECK_P2",
+                "BUGCHECK_P3",
+                "BUGCHECK_P4",
+                "FILE_IN_CAB",
+                "SECURITY_COOKIE",
+                "BLACKBOXBSD",
+                "BLACKBOXNTFS",
+                "BLACKBOXPNP",
+                "BLACKBOXWINLOGON",
+                "PROCESS_NAME"
+            )
+            
+            $cleanPreSymbols -split "`n" | ForEach-Object {
+                ForEach ($field in $preFields) {
+                    If ($_ -match "^$field=(.*)$") {
+                        $output[$field] = $matches[1].Trim()
+                    }
+                }
+            }
+            
+            # Pick out the postSymbol values we care about
+            $postFields = @(
+                "MODULE_NAME",
+                "IMAGE_NAME",
+                "IMAGE_VERSION",
+                "STACK_COMMAND",
+                "BUCKET_ID_FUNC_OFFSET",
+                "FAILURE_BUCKET_ID",
+                "OS_VERSION",
+                "BUILDLAB_STR",
+                "OSPLATFORM_TYPE",
+                "OSNAME",
+                "FAILURE_ID_HASH"
+            )
+            
+            $cleanPostSymbols -split "`n" | ForEach-Object {
+                ForEach ($field in $postFields) {
+                    If ($_ -match "^$field=(.*)$") {
+                        $output[$field] = $matches[1].Trim()
+                    }
                 }
             }
         }
-
-        } Else {
-
-        $preStack = $splits[1] -replace ('^  ','SYMBOL_NAME: ')
-        $stack = $($splits[2] -split 'SYMBOL_NAME:')[0]
-        $postStack = $($splits[2] -split 'SYMBOL_NAME:')[1]
-
-        $preSymbols = $preStack.split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+(_[A-Z0-9]+)?:  *' -CaseSensitive 
-        $cleanPreSymbols = $preSymbols -replace ':[ \t]+','=' 
-
-        $postSymbols = $postStack.split([Environment]::NewLine) | Select-String -Pattern '[A-Z]+(_[A-Z0-9]+)?:  *'
-        $cleanPostSymbols = $postSymbols -replace ':[ \t]+','=' 
-
-        # Pick out the preSymbol values we care about
-        $preFields = @(
-            "BUGCHECK_CODE",
-            "BUGCHECK_P1",
-            "BUGCHECK_P2",
-            "BUGCHECK_P3",
-            "BUGCHECK_P4",
-            "FILE_IN_CAB",
-            "SECURITY_COOKIE",
-            "BLACKBOXBSD",
-            "BLACKBOXNTFS",
-            "BLACKBOXPNP",
-            "BLACKBOXWINLOGON",
-            "PROCESS_NAME"
-        )
-        
-        $cleanPreSymbols -split "`n" | ForEach-Object {
-            ForEach ($field in $preFields) {
-                If ($_ -match "^$field=(.*)$") {
-                    $output[$field] = $matches[1].Trim()
-                }
-            }
-        }
-        
-        # Pick out the postSymbol values we care about
-        $postFields = @(
-            "MODULE_NAME",
-            "IMAGE_NAME",
-            "IMAGE_VERSION",
-            "STACK_COMMAND",
-            "BUCKET_ID_FUNC_OFFSET",
-            "FAILURE_BUCKET_ID",
-            "OS_VERSION",
-            "BUILDLAB_STR",
-            "OSPLATFORM_TYPE",
-            "OSNAME",
-            "FAILURE_ID_HASH"
-        )
-        
-        $cleanPostSymbols -split "`n" | ForEach-Object {
-            ForEach ($field in $postFields) {
-                If ($_ -match "^$field=(.*)$") {
-                    $output[$field] = $matches[1].Trim()
-                }
-            }
-        }
+    } catch {
+        # Post processing failed but we write nothing to the host because it would break downstream inputs
     }
     ###########
     # Outputs #
